@@ -10,13 +10,12 @@ export interface Options {
     version?: string,
     date?: string,
     description?: string,
-    releaseFeatureTags?: string[],
   ) => Release;
 }
 
 const defaultOptions: Options = {
-  releaseCreator: (version, date, description, releaseFeatureTags) =>
-    new Release(version, date, description, releaseFeatureTags),
+  releaseCreator: (version, date, description) =>
+    new Release(version, date, description),
 };
 
 /** Parse a markdown string */
@@ -25,7 +24,7 @@ export default function parser(markdown: string, options?: Options, releaseFeatu
   const tokens = tokenize(markdown);
 
   try {
-    return processTokens(tokens, opts);
+    return processTokens(tokens, opts, releaseFeatureTags);
   } catch (error) {
     throw new Error(
       `Parse error in the line ${tokens[0][0]}: ${error.message}`,
@@ -34,7 +33,7 @@ export default function parser(markdown: string, options?: Options, releaseFeatu
 }
 
 /** Process an array of tokens to build the Changelog */
-function processTokens(tokens: Token[], opts: Options): Changelog {
+function processTokens(tokens: Token[], opts: Options, releaseFeatureTags?: string[]): Changelog {
   const changelog = new Changelog("");
 
   changelog.flag = getContent(tokens, "flag");
@@ -74,7 +73,7 @@ function processTokens(tokens: Token[], opts: Options): Changelog {
       let change;
 
       while ((change = getContent(tokens, "li"))) {
-        release.addChange(type, change);
+        release.addChange(type, change, releaseFeatureTags);
       }
     }
   }

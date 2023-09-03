@@ -32,12 +32,13 @@ export default class Release {
     ]);
   }
 
-  changeIsLegal(change: Change | string) {
-    if (this.releaseFeatureTags.length < 1) return true;
-    if (change.toString().startsWith("[")) {
-      let flags = change.toString().match("^\[.+\]")?.[0].split(',');
-      return flags?.some(flag => this.releaseFeatureTags.includes(flag));
+  changeIsLegal(change: Change, releaseFeatureTags?: string[]) {
+    if (releaseFeatureTags === undefined) return true;
+    if (change.title.startsWith("[")) {
+      const flags = change.toString().match(/\[.+\]/)?.[0].slice(1,-1).split(",");
+      return flags?.some(flag => releaseFeatureTags.includes(flag));
     }
+    return change;
   }
 
   compare(release: Release) {
@@ -96,12 +97,12 @@ export default class Release {
     return this;
   }
 
-  addChange(type: string, change: Change | string) {
+  addChange(type: string, change: Change | string, releaseFeatureTags?: string[]) {
     if (!(change instanceof Change)) {
       change = new Change(change);
     }
 
-    if (!this.changeIsLegal(change)) {
+    if (!this.changeIsLegal(change, releaseFeatureTags)) {
       return this;
     }
 
