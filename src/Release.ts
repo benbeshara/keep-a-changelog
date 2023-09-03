@@ -9,15 +9,18 @@ export default class Release {
   yanked = false;
   description: string;
   changes: Map<string, Change[]>;
+  releaseFeatureTags: string[];
 
   constructor(
     version?: string | Semver,
     date?: string | Date,
     description = "",
+    releaseFeatureTags: string[] = [],
   ) {
     this.setVersion(version);
     this.setDate(date);
 
+    this.releaseFeatureTags = releaseFeatureTags;
     this.description = description;
     this.changes = new Map([
       ["added", []],
@@ -27,6 +30,14 @@ export default class Release {
       ["fixed", []],
       ["security", []],
     ]);
+  }
+
+  changeIsLegal(change: Change | string) {
+    if (this.releaseFeatureTags.length < 1) return true;
+    if (change.toString().startsWith("[")) {
+      let flags = change.toString().match("^\[.+\]")?.[0].split(',');
+      return flags?.some(flag => this.releaseFeatureTags.includes(flag));
+    }
   }
 
   compare(release: Release) {
@@ -88,6 +99,10 @@ export default class Release {
   addChange(type: string, change: Change | string) {
     if (!(change instanceof Change)) {
       change = new Change(change);
+    }
+
+    if (!this.changeIsLegal(change)) {
+      return this;
     }
 
     if (!this.changes.has(type)) {
@@ -189,28 +204,24 @@ export default class Release {
         return;
       }
 
-      return `[${this.version}]: ${changelog.url}/releases/tag/${
-        changelog.tagName(this)
-      }`;
+      return `[${this.version}]: ${changelog.url}/releases/tag/${changelog.tagName(this)
+        }`;
     }
 
     if (!this.version) {
-      return `[Unreleased]: ${changelog.url}/compare/${
-        changelog.tagName(previous)
-      }...${changelog.head}`;
+      return `[Unreleased]: ${changelog.url}/compare/${changelog.tagName(previous)
+        }...${changelog.head}`;
     }
 
     if (!this.date) {
-      return `[${this.version}]: ${changelog.url}/compare/${
-        changelog.tagName(previous)
-      }...${changelog.head}`;
+      return `[${this.version}]: ${changelog.url}/compare/${changelog.tagName(previous)
+        }...${changelog.head}`;
     }
 
-    return `[${this.version}]: ${changelog.url}/compare/${
-      changelog.tagName(
-        previous,
-      )
-    }...${changelog.tagName(this)}`;
+    return `[${this.version}]: ${changelog.url}/compare/${changelog.tagName(
+      previous,
+    )
+      }...${changelog.tagName(this)}`;
   }
 
   getLinks(changelog: Changelog) {

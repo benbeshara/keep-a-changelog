@@ -10,16 +10,17 @@ export interface Options {
     version?: string,
     date?: string,
     description?: string,
+    releaseFeatureTags?: string[],
   ) => Release;
 }
 
 const defaultOptions: Options = {
-  releaseCreator: (version, date, description) =>
-    new Release(version, date, description),
+  releaseCreator: (version, date, description, releaseFeatureTags) =>
+    new Release(version, date, description, releaseFeatureTags),
 };
 
 /** Parse a markdown string */
-export default function parser(markdown: string, options?: Options): Changelog {
+export default function parser(markdown: string, options?: Options, releaseFeatureTags?: string[]): Changelog {
   const opts = Object.assign({}, defaultOptions, options);
   const tokens = tokenize(markdown);
 
