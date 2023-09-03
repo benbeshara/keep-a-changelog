@@ -19,7 +19,7 @@ const defaultOptions: Options = {
 };
 
 /** Parse a markdown string */
-export default function parser(markdown: string, options?: Options, releaseFeatureTags?: string[]): Changelog {
+export default function parser(markdown: string, releaseFeatureTags: Object, options?: Options): Changelog {
   const opts = Object.assign({}, defaultOptions, options);
   const tokens = tokenize(markdown);
 
@@ -33,7 +33,7 @@ export default function parser(markdown: string, options?: Options, releaseFeatu
 }
 
 /** Process an array of tokens to build the Changelog */
-function processTokens(tokens: Token[], opts: Options, releaseFeatureTags?: string[]): Changelog {
+function processTokens(tokens: Token[], opts: Options, releaseFeatureTags: Object): Changelog {
   const changelog = new Changelog("");
 
   changelog.flag = getContent(tokens, "flag");

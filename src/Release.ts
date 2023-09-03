@@ -32,13 +32,46 @@ export default class Release {
     ]);
   }
 
-  changeIsLegal(change: Change, releaseFeatureTags?: string[]) {
+  changeIsLegal(change: Change, releaseFeatureTags?: Object) {
     if (releaseFeatureTags === undefined) return true;
-    if (change.title.startsWith("[")) {
-      const flags = change.toString().match(/\[.+\]/)?.[0].slice(1,-1).split(",");
-      return flags?.some(flag => releaseFeatureTags.includes(flag));
-    }
-    return change;
+    if (!change.title.startsWith("[")) return true;
+
+    let suites = change.title.match(/\[.+\]/)?.[0].slice(1, -1).split(",");
+    suites = suites.map((line) =>
+      line
+        .trim()
+        .split("+")
+        .map((tag) => tag.split(":"))
+    );
+
+    return suites.some((tests) => {
+      return tests.every(([type, value]) => {
+        const falsify = type.startsWith("!");
+        if (falsify) {
+          type = type.slice(1);
+        }
+
+        let result = false;
+        if (Object.hasOwn(releaseFeatureTags, type)) {
+          result = releaseFeatureTags[type] === value;
+        }
+
+        return falsify ? !result : result;
+      });
+    });
+
+    // Alternate implementation for structured data
+    // return suites?.some(suite => {
+    //   let conditions = suite.split("+");
+    //   const theme = conditions[0];
+    //   conditions = conditions.slice(1);
+    //   console.log("conditions", conditions);
+    //   console.log(theme == releaseFeatureTags.theme, (conditions.length < 1 || conditions.every(condition => releaseFeatureTags.conditions.includes(condition))));
+    //   if(theme == releaseFeatureTags.theme && (conditions.length < 1 || conditions.every(condition => releaseFeatureTags.conditions.includes(condition)))) {
+    //     return true;
+    //   }
+    //   return false;
+    // });
   }
 
   compare(release: Release) {
@@ -97,7 +130,7 @@ export default class Release {
     return this;
   }
 
-  addChange(type: string, change: Change | string, releaseFeatureTags?: string[]) {
+  addChange(type: string, change: Change | string, releaseFeatureTags?: Object) {
     if (!(change instanceof Change)) {
       change = new Change(change);
     }
